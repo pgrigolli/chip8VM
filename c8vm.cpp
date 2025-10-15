@@ -62,8 +62,21 @@ void VM::executarInstrução(VM* vm){
             // JP addr
             vm->PC = NNN;
             break;
-            
 
+        case 2:
+            // CALL addr
+            vm->SP++;
+            vm->stack[vm->SP] = vm->PC;
+            vm->PC = NNN;
+
+            break;
+        case 3:
+            // Skip if Equal (SE)
+            if(vm->V[X] == NN){
+                vm->PC += 2;
+            }
+
+            break;
         case 6:
             vm->V[X] = NN;
             break;
