@@ -50,6 +50,20 @@ void VM::executarInstrução(VM* vm){
                 }
                 break;
             }
+            // RET
+            if(instrucao == 0x00EE){
+                vm->PC = vm->stack[vm->SP];
+                vm->SP--;
+
+                break;
+            }
+
+        case 1:
+            // JP addr
+            vm->PC = NNN;
+            break;
+            
+
         case 6:
             vm->V[X] = NN;
             break;
