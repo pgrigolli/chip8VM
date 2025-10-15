@@ -81,8 +81,13 @@ void VM::executarInstrução(VM* vm){
             vm->V[X] = NN;
             break;
 
+        case 10:
+            vm->I = NNN;
+
+            break;
+
         default:
-            printf("Grupo nao implementado! Instrucao: 0x%04X\n", instrucao);
+            printf("Grupo nao implementado! Instrucao: 0x%04X\n, Grupo: %d, Resto: %d", instrucao, grupo, NNN);
             exit(1);
     }
 }
