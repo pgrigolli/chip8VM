@@ -1,7 +1,6 @@
 #include "c8vm.hpp"
 #include <stdio.h>
-#include <stdlib.h>
-
+#include <stdlib.h> 
 
 void VM::setPC(uint16_t pc){
     this->PC = pc;
@@ -44,7 +43,7 @@ void VM::executarInstrução(VM* vm){
     switch(grupo){
 
         case 0:
-            // CLS
+            // CLS  
             if(instrucao == 0x00E0){
                 for(int i = 0; i < 64 * 32; i++){
                     vm->DISPLAY[i] = 0;
@@ -56,7 +55,7 @@ void VM::executarInstrução(VM* vm){
             break;
 
         default:
-            printf("Grupo não implementado! Instrução: 0x%04X\n", instrucao);
+            printf("Grupo nao implementado! Instrucao: 0x%04X\n", instrucao);
             exit(1);
     }
 }
@@ -64,7 +63,7 @@ void VM::executarInstrução(VM* vm){
 void VM::imprimirRegistradores(VM* vm){
     printf("PC: 0x%04X I: 0x%04X SP: 0x%02x\n", vm->PC, vm->I, vm->V[I]);
     for(int i = 0; i < 16; i++){
-        printf("V[%X]: 0x%02X", i, vm->V[i]);
+        printf("V[%X]: 0x%02X ", i, vm->V[i]);
     }
     printf("\n");
 }
