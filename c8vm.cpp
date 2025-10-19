@@ -86,6 +86,18 @@ void VM::executarInstrução(VM* vm){
 
             break;
 
+        case 13:
+            uint8_t posX = V[X] % 64; // Posições podem vir "para fora" do display
+            uint8_t posY = V[Y] % 32;
+
+            V[15] = 0; //V[F] = 0
+
+            for(int i = N; i < vm->RAM[vm->I + N]; i++){
+                    
+            }
+
+
+
         default:
             printf("Grupo nao implementado! Instrucao: 0x%04X\n, Grupo: %d, Resto: %d", instrucao, grupo, NNN);
             exit(1);
