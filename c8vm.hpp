@@ -1,6 +1,7 @@
 #pragma once 
 
 #include <stdint.h>
+#include "defs.hpp"
 class VM{
     private:
         uint8_t  RAM[4096];      // Memória de 4KB
@@ -8,8 +9,8 @@ class VM{
         uint8_t  V[16];          // Registradores de proposito geral
         uint8_t  SP;             // Stack Pointer
         uint16_t I;              // Registrador de índice
-        uint16_t stack[16];      // Pilha
-        uint8_t  DISPLAY[64*32]; // Tela
+        uint16_t stack[16];                           // Pilha
+        uint8_t  DISPLAY[VIDEO_HEIGHT * VIDEO_WIDTH]; // Tela
 
     public:
 
@@ -21,5 +22,6 @@ class VM{
         void carregarROM(VM* vm, char* arqRom, uint16_t pc_inicial);
         void imprimirRegistradores(VM* vm);
 
+        bool pressionado(uint8_t key);
 
 };
