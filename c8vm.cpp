@@ -26,31 +26,33 @@ void VM::inicializar(uint16_t pcInicial){
 
 void VM::carregarROM(VM* vm, char* arqRom, uint16_t pcInicial){
 
-    if(!arqRom){
-        printf("Arquivo ROM nao informado!");
-        exit(1);
-    }
-
-    FILE* rom = fopen(arqRom, "rb");
-    fseek(rom, 0, SEEK_END);
-    int tamRom = ftell(rom);
-    rewind(rom);
-
-    fread(&vm->RAM[pcInicial], 1, tamRom, rom);
-
+  FILE* rom = fopen(arqRom, "rb");
+  
+  if(rom == NULL) {
+    printf("Erro ao abrir o arquivo %s\n", arqRom);
+    return;
+  }
+  
+  fseek(rom, 0, SEEK_END);
+  int tam_rom = ftell(rom);
+  rewind(rom);
+  
+  if(tam_rom > (4096 - pcInicial)) {
+    printf("Erro: ROM muito grande para caber na memoria\n");
     fclose(rom);
+    return;
+  }
 
-    printf("ROM CARREGADA, TAMANHO DA ROM: %d\n", tamRom);
+  fread(&this->RAM[pcInicial], sizeof(uint8_t), tam_rom, rom);
+  fclose(rom);
 }
 
 void VM::executarInstrução(VM* vm){
     uint16_t instrucao = (vm->RAM[vm->PC] << 8 | vm->RAM[vm->PC + 1]); //Coloca a instrução em PC na nos 4 bits mais a esquerda e
                                                                        //Coloca a instrução em PC + 1 nos 4 bits mais a direita 
-
+    printf("RAM: %d, RAM + 1 %d \n", vm->RAM[vm->PC], vm->RAM[vm->PC + 1]);
     printf("Instrucao: 0x%04X\n", instrucao);
-    uint16_t nextPC = vm->PC + 2;
-    vm->PC = nextPC;
-
+    
     uint8_t grupo = instrucao >> 12;
     uint8_t X     = (instrucao & 0x0F00) >> 8;
     uint8_t Y     = (instrucao & 0x00F0) >> 4;
@@ -96,9 +98,7 @@ void VM::executarInstrução(VM* vm){
         case 3:
             // Skip if Equal (SE)
             if(vm->V[X] == NN){
-                vm->PC = nextPC + 2;
-            }else{
-                vm->PC = nextPC;
+                vm->PC += 2;
             }
 
             break;
@@ -175,10 +175,8 @@ void VM::executarInstrução(VM* vm){
             exit(1);
     }
 
-    // if(nextPC > sizeof(vm->RAM) - 0x200){
-    //     return;
-    // }
-    vm->PC = nextPC;
+    vm->PC += 2;
+
 }
 
 void VM::imprimirRegistradores(VM* vm){

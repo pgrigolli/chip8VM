@@ -10,12 +10,13 @@ int main(int argc, char** argv){
     #ifdef DEBUG
     vm.imprimirRegistradores(&vm);
     #endif
-
-    while(1){
+    int i = 0;
+    while(i < 10){
         vm.executarInstrução(&vm);
         #ifdef DEBUG
         vm.imprimirRegistradores(&vm);
         #endif
+        i++;
     }
 
 }
