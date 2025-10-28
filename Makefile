@@ -15,8 +15,12 @@ main.o: main.cpp c8vm.hpp defs.hpp
 	$(CC) $(CFLAGS) -c main.cpp -o main.o
 
 .PHONY: run
-run: all
+runIbm: all
 	./chip8 "IBM Logo.ch8"
+
+.PHONY: run
+runLogo: all
+	./chip8 "./1-chip8-logo.ch8"
 
 .PHONY: clean
 clean:

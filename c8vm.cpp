@@ -51,9 +51,12 @@ void VM::carregarROM(VM* vm, char* arqRom, uint16_t pcInicial){
 void VM::executarInstrução(VM* vm){
     uint16_t instrucao = (vm->RAM[vm->PC] << 8 | vm->RAM[vm->PC + 1]); //Coloca a instrução em PC na nos 4 bits mais a esquerda e
                                                                        //Coloca a instrução em PC + 1 nos 4 bits mais a direita 
-    printf("RAM: %d, RAM + 1 %d \n", vm->RAM[vm->PC], vm->RAM[vm->PC + 1]);
+    printf("RAM: %02X, RAM + 1 %02X, PC: %04X \n", vm->RAM[vm->PC], vm->RAM[vm->PC + 1], vm->PC);
     printf("Instrucao: 0x%04X\n", instrucao);
     
+    vm->PC += 2;
+
+
     uint8_t grupo = instrucao >> 12;
     uint8_t X     = (instrucao & 0x0F00) >> 8;
     uint8_t Y     = (instrucao & 0x00F0) >> 4;
@@ -127,6 +130,7 @@ void VM::executarInstrução(VM* vm){
 
         case 9:
             if(vm->V[X] != vm->V[Y]) vm->PC += 2;
+            break;
 
         case 0xA:
             vm->I = NNN;
@@ -135,10 +139,11 @@ void VM::executarInstrução(VM* vm){
 
         case 0xB:
             vm->PC = NNN + vm->V[0];
+            break;
         
         case 0xC:
             vm->V[X] = (rand() % 255) & NN;
-
+            break;
 
         case 0xD: {
             uint8_t posX = vm->V[X] % VIDEO_WIDTH; 
@@ -176,12 +181,11 @@ void VM::executarInstrução(VM* vm){
             exit(1);
     }
 
-    vm->PC += 2;
 
 }
 
 void VM::imprimirRegistradores(VM* vm){
-    printf("PC: 0x%04X I: 0x%04X SP: 0x%02x\n", vm->PC, vm->I, vm->V[SP]);
+    printf("PC: 0x%04X I: 0x%04X SP: 0x%02x\n", vm->PC, vm->I, vm->SP);
     for(int i = 0; i < 16; i++){
         printf("V[%X]: 0x%02X ", i, vm->V[i]);
     }
