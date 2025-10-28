@@ -1,35 +1,14 @@
-#include "c8vm.hpp"
-#include "defs.hpp"
-//int main(int argc, char** argv){
-//    VM vm = VM();
-
-//    vm.inicializar(0x200);
-    
-//    vm.carregarROM(&vm, argv[1], 0x200);
-
-//    #ifdef DEBUG
-//    vm.imprimirRegistradores(&vm);
-//    #endif
-//    int i = 0;
-//    while(i < 10){
-//        vm.executarInstrução(&vm);
-//        #ifdef DEBUG
-//        vm.imprimirRegistradores(&vm);
-//        #endif
-//        i++;
-//    }
-
-//}
-
-
 #include <stdio.h>
 #include "c8vm.hpp"
 #include "defs.hpp"
-#include <SDL2/SDL.h> // Necessário para a janela
+#include <SDL2/SDL.h> 
 
-// Define a escala da janela. Cada pixel do Chip-8 (64x32)
-// será desenhado como um quadrado de ESCALA x ESCALA pixels.
 const int ESCALA = 10; 
+const int FPS = 60; // Tela e timers rodam a 60Hz [cite: 139, 140]
+const int FRAME_DELAY = 1000 / FPS; 
+const int CLOCK_HZ = 500; // Velocidade padrão da CPU [cite: 133]
+const int CICLOS_POR_FRAME = CLOCK_HZ / FPS; 
+
 
 int main(int argc, char** argv){
     
@@ -39,13 +18,15 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    // --- Inicialização da VM (como antes) ---
+    // --- Inicialização da VM ---
     VM vm = VM();
-    vm.inicializar(0x200);
-    vm.carregarROM(&vm, argv[1], 0x200);
+    vm.inicializar(0x200); // PC Padrão 
+    
+    // --- CORREÇÃO DE ESTILO: Chamada unificada para C++ ---
+    vm.carregarROM(argv[1], 0x200); // Removido o "&vm"
 
     // --- Inicialização do SDL ---
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         printf("Erro ao inicializar SDL: %s\n", SDL_GetError());
         return 1;
     }
@@ -55,26 +36,15 @@ int main(int argc, char** argv){
         "Chip-8 Emulator",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        VIDEO_WIDTH * ESCALA,  // Largura da janela (ex: 64 * 10)
-        VIDEO_HEIGHT * ESCALA, // Altura da janela (ex: 32 * 10)
+        VIDEO_WIDTH * ESCALA,  // 64 * 10
+        VIDEO_HEIGHT * ESCALA, // 32 * 10
         SDL_WINDOW_SHOWN
     );
-
-    if (window == NULL) {
-        printf("Erro ao criar janela: %s\n", SDL_GetError());
-        SDL_Quit();
-        return 1;
-    }
+    if (window == NULL) { /*... (tratamento de erro) ...*/ return 1; }
 
     // Cria o renderizador
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
-    if (renderer == NULL) {
-        printf("Erro ao criar renderer: %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
+    if (renderer == NULL) { /*... (tratamento de erro) ...*/ return 1; }
 
     // --- Loop Principal da Emulação ---
     bool running = true;
@@ -82,33 +52,79 @@ int main(int argc, char** argv){
 
     while (running) {
         
-        // 1. Processar Eventos (Input)
+        // 1. Processar Eventos (Input) [cite: 141]
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
             }
-            // Aqui você adicionará o mapeamento do teclado (KEYDOWN/KEYUP)
-            // para atualizar o array `keypad` da VM.
+            
+            // Mapeamento de Teclado (QWERTY para Hex) [cite: 100]
+            if (event.type == SDL_KEYDOWN) {
+                switch (event.key.keysym.sym) {
+                    case SDLK_1: vm.keypad[0x1] = 1; break;
+                    case SDLK_2: vm.keypad[0x2] = 1; break;
+                    case SDLK_3: vm.keypad[0x3] = 1; break;
+                    case SDLK_4: vm.keypad[0xC] = 1; break;
+                    case SDLK_q: vm.keypad[0x4] = 1; break;
+                    case SDLK_w: vm.keypad[0x5] = 1; break;
+                    case SDLK_e: vm.keypad[0x6] = 1; break;
+                    case SDLK_r: vm.keypad[0xD] = 1; break;
+                    case SDLK_a: vm.keypad[0x7] = 1; break;
+                    case SDLK_s: vm.keypad[0x8] = 1; break;
+                    case SDLK_d: vm.keypad[0x9] = 1; break;
+                    case SDLK_f: vm.keypad[0xE] = 1; break;
+                    case SDLK_z: vm.keypad[0xA] = 1; break;
+                    case SDLK_x: vm.keypad[0x0] = 1; break;
+                    case SDLK_c: vm.keypad[0xB] = 1; break;
+                    case SDLK_v: vm.keypad[0xF] = 1; break;
+                    default: break;
+                }
+            }
+
+            if (event.type == SDL_KEYUP) {
+                switch (event.key.keysym.sym) {
+                    case SDLK_1: vm.keypad[0x1] = 0; break;
+                    case SDLK_2: vm.keypad[0x2] = 0; break;
+                    case SDLK_3: vm.keypad[0x3] = 0; break;
+                    case SDLK_4: vm.keypad[0xC] = 0; break;
+                    case SDLK_q: vm.keypad[0x4] = 0; break;
+                    case SDLK_w: vm.keypad[0x5] = 0; break;
+                    case SDLK_e: vm.keypad[0x6] = 0; break;
+                    case SDLK_r: vm.keypad[0xD] = 0; break;
+                    case SDLK_a: vm.keypad[0x7] = 0; break;
+                    case SDLK_s: vm.keypad[0x8] = 0; break;
+                    case SDLK_d: vm.keypad[0x9] = 0; break;
+                    case SDLK_f: vm.keypad[0xE] = 0; break;
+                    case SDLK_z: vm.keypad[0xA] = 0; break;
+                    case SDLK_x: vm.keypad[0x0] = 0; break;
+                    case SDLK_c: vm.keypad[0xB] = 0; break;
+                    case SDLK_v: vm.keypad[0xF] = 0; break;
+                    default: break;
+                }
+            }
         }
 
-        // 2. Executar Ciclos da CPU
-        // Executa várias instruções por frame para controlar a velocidade.
-        // Ajuste o '10' conforme necessário.
-        for (int i = 0; i < 10; ++i) {
-            vm.executarInstrução(&vm);
+        // 2. Executar Ciclos da CPU (a 500Hz) [cite: 133, 134]
+        for (int i = 0; i < CICLOS_POR_FRAME; ++i) {
+            // --- CORREÇÃO DE ESTILO: Chamada unificada para C++ ---
+            vm.executarInstrução(); // Removido o "&vm"
         }
 
-        // 3. Renderizar a Tela
-        // Chama a nova função que você criou
+        // 3. Renderizar a Tela (a 60Hz) [cite: 139]
         vm.renderizarTela(renderer, ESCALA);
 
-        // 4. Atualizar Timers (delay e sound)
-        // (Você precisará implementar a lógica de decremento dos timers aqui,
-        // geralmente a 60Hz)
+        // 4. Atualizar Timers (a 60Hz) [cite: 103, 140]
+        if (vm.delay_timer > 0) {
+            vm.delay_timer--;
+        }
+
+        if (vm.sound_timer > 0) {
+            vm.sound_timer--;
+            // TODO: Adicionar lógica de "BEEP" aqui [cite: 105, 142]
+        }
 
         // 5. Delay
-        // Trava o loop para rodar a ~60 quadros por segundo (1000ms / 60fps ≈ 16ms)
-        SDL_Delay(16);
+        SDL_Delay(FRAME_DELAY);
     }
 
     // --- Finalização ---
