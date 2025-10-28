@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "defs.hpp"
+#include <SDL2/SDL.h>
 class VM{
     private:
         uint8_t  RAM[4096];      // Memória de 4KB
@@ -23,5 +24,8 @@ class VM{
         void imprimirRegistradores(VM* vm);
 
         bool pressionado(uint8_t key);
+
+        void renderizarTela(SDL_Renderer* renderer, int escala);
+
 
 };

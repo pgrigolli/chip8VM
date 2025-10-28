@@ -4,6 +4,7 @@
 
 #include "c8vm.hpp"
 #include "defs.hpp"
+#include <SDL2/SDL.h>
 
 void VM::setPC(uint16_t pc){
     this->PC = pc;
@@ -192,4 +193,33 @@ bool VM::pressionado(uint8_t key){
     //     return keypad[key];
     // } 
     return false;
+
 }
+
+
+
+
+void VM::renderizarTela(SDL_Renderer* renderer, int escala) {
+    // Limpa a tela (fundo preto)
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+
+    // Define a cor dos pixels "acesos" (branco)
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
+    // Percorre cada pixel do display virtual (64x32)
+    for (int y = 0; y < VIDEO_HEIGHT; y++) {
+        for (int x = 0; x < VIDEO_WIDTH; x++) {
+            int index = y * VIDEO_WIDTH + x;
+            if (DISPLAY[index]) {
+                SDL_Rect pixel = { x * escala, y * escala, escala, escala };
+                SDL_RenderFillRect(renderer, &pixel);
+            }
+        }
+    }
+
+    // Mostra tudo na janela
+    SDL_RenderPresent(renderer);
+}
+
+
