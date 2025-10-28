@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include "defs.hpp"
 #include <SDL2/SDL.h>
+#include "display.hpp"
+
 class VM{
     private:
         uint8_t  RAM[4096];      // Memória de 4KB
@@ -11,7 +13,7 @@ class VM{
         uint8_t  SP;             // Stack Pointer
         uint16_t I;              // Registrador de índice
         uint16_t stack[16];                           // Pilha
-        uint8_t  DISPLAY[VIDEO_HEIGHT * VIDEO_WIDTH]; // Tela
+        Display  DISPLAY;                              // Tela encapsulada em classe
 
     public:
 

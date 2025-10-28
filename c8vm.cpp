@@ -21,7 +21,7 @@ void VM::inicializar(uint16_t pcInicial){
 
     for(int i=0; i<16; i++)this->V[i] = 0;
     for(int i=0; i<4096; i++) this->RAM[i] = 0;
-    for(int i=0;i<VIDEO_WIDTH*VIDEO_HEIGHT;i++) this->DISPLAY[i] = 0;
+    this->DISPLAY.clear();
     for(int i=0;i<16;i++) this->stack[i] = 0;
 }
 
@@ -71,7 +71,7 @@ void VM::executarInstrução(VM* vm){
             // CLS  
             if(instrucao == 0x00E0){
                 for(int i = 0; i < VIDEO_HEIGHT * VIDEO_WIDTH; i++){
-                    vm->DISPLAY[i] = 0;
+                    this->DISPLAY.clear();
                 }
                 break;
             }
@@ -147,7 +147,7 @@ void VM::executarInstrução(VM* vm){
 
         case 0xD: {
             uint8_t posX = vm->V[X] % VIDEO_WIDTH; 
-            uint8_t posY = vm->V[Y] % 32;
+            uint8_t posY = vm->V[Y] % VIDEO_HEIGHT;
 
             vm->V[0xF] = 0;
 
@@ -156,13 +156,12 @@ void VM::executarInstrução(VM* vm){
                 uint8_t spriteByte = vm->RAM[vm->I + row];
 
                 for(int col = 0; col < 8; col++){
-                    uint8_t spritePixel = spriteByte & (0x80 >> col);
-                    uint32_t screenIndex = (posY + row) * VIDEO_WIDTH + (posX + col);
-                    uint32_t screenPixel = vm->DISPLAY[screenIndex];
-
-                    if (spritePixel){
-                        if (screenPixel == 0xFFFFFFFF) vm->V[0xF] = 1;
-                        vm->DISPLAY[screenIndex] = screenPixel ^ 0xFFFFFFFF;
+                    bool spritePixel = (spriteByte & (0x80 >> col)) != 0;
+                    if(spritePixel){
+                        int sx = (posX + col) % VIDEO_WIDTH;
+                        int sy = (posY + row) % VIDEO_HEIGHT;
+                        uint8_t prev = vm->DISPLAY.togglePixel(sx, sy);
+                        if(prev) vm->V[0xF] = 1;
                     }
                 }
             }
@@ -204,26 +203,7 @@ bool VM::pressionado(uint8_t key){
 
 
 void VM::renderizarTela(SDL_Renderer* renderer, int escala) {
-    // Limpa a tela (fundo preto)
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
-
-    // Define a cor dos pixels "acesos" (branco)
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
-    // Percorre cada pixel do display virtual (64x32)
-    for (int y = 0; y < VIDEO_HEIGHT; y++) {
-        for (int x = 0; x < VIDEO_WIDTH; x++) {
-            int index = y * VIDEO_WIDTH + x;
-            if (DISPLAY[index]) {
-                SDL_Rect pixel = { x * escala, y * escala, escala, escala };
-                SDL_RenderFillRect(renderer, &pixel);
-            }
-        }
-    }
-
-    // Mostra tudo na janela
-    SDL_RenderPresent(renderer);
+    this->DISPLAY.render(renderer, escala);
 }
 
 

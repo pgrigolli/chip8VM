@@ -5,14 +5,17 @@ CFLAGS = -std=c++11 -O2
 LDFLAGS = -lSDL2
 
 
-chip8: c8vm.o main.o
-	$(CC) $(CFLAGS) -o $@ c8vm.o main.o $(LDFLAGS) 
+chip8: c8vm.o main.o display.o
+	$(CC) $(CFLAGS) -o $@ c8vm.o main.o display.o $(LDFLAGS) 
 
-c8vm.o: c8vm.cpp c8vm.hpp defs.hpp
+c8vm.o: c8vm.cpp c8vm.hpp defs.hpp display.hpp
 	$(CC) $(CFLAGS) -c c8vm.cpp -o c8vm.o
 
 main.o: main.cpp c8vm.hpp defs.hpp
 	$(CC) $(CFLAGS) -c main.cpp -o main.o
+
+display.o: display.cpp display.hpp defs.hpp
+	$(CC) $(CFLAGS) -c display.cpp -o display.o
 
 .PHONY: run
 runIbm: all
