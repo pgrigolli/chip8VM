@@ -1,43 +1,124 @@
 #include <stdio.h>
+#include <cstring>  
+#include <cstdlib>  
 #include "c8vm.hpp"
 #include "defs.hpp"
 #include <SDL2/SDL.h> 
 
-const int ESCALA = 10; 
-const int FPS = 60; // Tela e timers rodam a 60Hz [cite: 139, 140]
+// --- Valores Padrão ---
+// Deixam de ser 'const' para podermos alterá-los
+int ESCALA = 10;        // Padrão 
+int CLOCK_HZ = 500;   // Padrão 
+uint16_t LOAD_ADDRESS = 0x200; // Padrão 
+
+const int FPS = 60; // Tela e timers rodam a 60Hz 
 const int FRAME_DELAY = 1000 / FPS; 
-const int CLOCK_HZ = 500; // Velocidade padrão da CPU [cite: 133]
-const int CICLOS_POR_FRAME = CLOCK_HZ / FPS; 
+// int CICLOS_POR_FRAME; // Será calculado DEPOIS da análise
+
+/**
+ * @brief Imprime as instruções de uso conforme especificado 
+ */
+void imprimirAjuda(char* nomePrograma) {
+    printf("Uso: %s [opções] caminho/para/a/rom.ch8\n", nomePrograma); 
+    printf("\nOpções de Linha de Comando:\n"); 
+    printf("  --clock <velocidade>  Define a velocidade da CPU em Hz. Padrão: 500Hz.\n");
+    printf("  --scale <fator>       Define o fator de escala da janela. Padrão: 10.\n");
+    printf("  --load <endereco>     Define o endereço de carga da ROM (ex: 512 ou 0x200). Padrão: 0x200. \n");
+    printf("  --help                Exibe esta mensagem de ajuda.\n");
+}
 
 
 int main(int argc, char** argv){
     
     // --- Verificação de Argumentos ---
     if (argc < 2) {
-        printf("Uso: %s <caminho_para_rom>\n", argv[0]);
+        imprimirAjuda(argv[0]);
         return 1;
     }
 
-    // --- Inicialização da VM ---
-    VM vm = VM();
-    vm.inicializar(0x200); // PC Padrão 
-    
-    // --- CORREÇÃO DE ESTILO: Chamada unificada para C++ ---
-    vm.carregarROM(argv[1], 0x200); // Removido o "&vm"
+    char* romPath = NULL;
 
-    // --- Inicialização do SDL ---
+    // --- 1. Análise dos Argumentos de Linha de Comando ---
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--help") == 0) {
+            imprimirAjuda(argv[0]);
+            return 0; // Sai do programa com sucesso
+        } 
+        else if (strcmp(argv[i], "--clock") == 0) { 
+            if (i + 1 < argc) {
+                CLOCK_HZ = atoi(argv[++i]); // Converte o próximo argumento para int
+            } else {
+                printf("Erro: --clock requer um valor.\n");
+                return 1;
+            }
+        } 
+        else if (strcmp(argv[i], "--scale") == 0) { 
+            if (i + 1 < argc) {
+                ESCALA = atoi(argv[++i]); // Converte o próximo argumento para int
+            } else {
+                printf("Erro: --scale requer um valor.\n");
+                return 1;
+            }
+        } 
+        else if (strcmp(argv[i], "--load") == 0) { 
+             if (i + 1 < argc) {
+                // strtol (base 0) lida com "512" e "0x200"
+                LOAD_ADDRESS = (uint16_t)strtol(argv[++i], NULL, 0); 
+            } else {
+                printf("Erro: --load requer um valor.\n");
+                return 1;
+            }
+        }
+        else if (argv[i][0] == '-') {
+            printf("Erro: Opção desconhecida '%s'\n", argv[i]);
+            imprimirAjuda(argv[0]);
+            return 1;
+        } 
+        else {
+            // Se não for uma opção, deve ser o caminho da ROM
+            if (romPath == NULL) {
+                romPath = argv[i];
+            } else {
+                printf("Erro: Múltiplos caminhos de ROM especificados.\n");
+                imprimirAjuda(argv[0]);
+                return 1;
+            }
+        }
+    }
+
+    // Verifica se a ROM foi fornecida
+    if (romPath == NULL) {
+        printf("Erro: Caminho da ROM não especificado.\n");
+        imprimirAjuda(argv[0]);
+        return 1;
+    }
+
+    // --- 2. Calcular CICLOS_POR_FRAME com base nos argumentos ---
+    const int CICLOS_POR_FRAME = CLOCK_HZ / FPS; 
+    
+    printf("Configurações:\n  ROM: %s\n  Clock: %d Hz\n  Escala: %dx\n  Endereço Carga: 0x%X\n",
+           romPath, CLOCK_HZ, ESCALA, LOAD_ADDRESS);
+    printf("Executando %d ciclos de CPU por frame.\n", CICLOS_POR_FRAME);
+
+
+    // --- 3. Inicialização da VM (usando as variáveis) ---
+    VM vm = VM();
+    vm.inicializar(LOAD_ADDRESS); 
+    vm.carregarROM(romPath, LOAD_ADDRESS); 
+
+    // --- 4. Inicialização do SDL (usando as variáveis) ---
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         printf("Erro ao inicializar SDL: %s\n", SDL_GetError());
         return 1;
     }
 
-    // Cria a janela
+    // Cria a janela (usando a ESCALA configurada)
     SDL_Window* window = SDL_CreateWindow(
         "Chip-8 Emulator",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        VIDEO_WIDTH * ESCALA,  // 64 * 10
-        VIDEO_HEIGHT * ESCALA, // 32 * 10
+        VIDEO_WIDTH * ESCALA,  // Usa a variável
+        VIDEO_HEIGHT * ESCALA, // Usa a variável
         SDL_WINDOW_SHOWN
     );
     if (window == NULL) { /*... (tratamento de erro) ...*/ return 1; }
@@ -46,19 +127,19 @@ int main(int argc, char** argv){
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) { /*... (tratamento de erro) ...*/ return 1; }
 
-    // --- Loop Principal da Emulação ---
+    // --- Loop Principal da Emulação (sem alterações) ---
     bool running = true;
     SDL_Event event;
 
     while (running) {
         
-        // 1. Processar Eventos (Input) [cite: 141]
+        // 1. Processar Eventos (Input) 
         while (SDL_PollEvent(&event)) {
+            // ... (seu código de teclado)
             if (event.type == SDL_QUIT) {
                 running = false;
             }
             
-            // Mapeamento de Teclado (QWERTY para Hex) [cite: 100]
             if (event.type == SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
                     case SDLK_1: vm.keypad[0x1] = 1; break;
@@ -104,23 +185,22 @@ int main(int argc, char** argv){
             }
         }
 
-        // 2. Executar Ciclos da CPU (a 500Hz) [cite: 133, 134]
+        // 2. Executar Ciclos da CPU (a X Hz) 
         for (int i = 0; i < CICLOS_POR_FRAME; ++i) {
-            // --- CORREÇÃO DE ESTILO: Chamada unificada para C++ ---
-            vm.executarInstrução(); // Removido o "&vm"
+            vm.executarInstrução(); 
         }
 
-        // 3. Renderizar a Tela (a 60Hz) [cite: 139]
-        vm.renderizarTela(renderer, ESCALA);
+        // 3. Renderizar a Tela (a 60Hz) 
+        vm.renderizarTela(renderer, ESCALA); // Passa a ESCALA
 
-        // 4. Atualizar Timers (a 60Hz) [cite: 103, 140]
+        // 4. Atualizar Timers (a 60Hz) 
         if (vm.delay_timer > 0) {
             vm.delay_timer--;
         }
 
         if (vm.sound_timer > 0) {
             vm.sound_timer--;
-            // TODO: Adicionar lógica de "BEEP" aqui [cite: 105, 142]
+            // TODO: Adicionar lógica de "BEEP" 
         }
 
         // 5. Delay

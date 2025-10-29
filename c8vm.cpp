@@ -7,7 +7,7 @@
 #include "defs.hpp"
 #include <SDL2/SDL.h>
 
-// Sprites dos dígitos (0-F) que devem ser carregados na memória [cite: 52]
+// Sprites dos dígitos (0-F) que devem ser carregados na memória 
 uint8_t FONT_SPRITES[80] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -208,7 +208,7 @@ void VM::executarInstrução(){
             uint8_t posX = this->V[X] % VIDEO_WIDTH; 
             uint8_t posY = this->V[Y] % VIDEO_HEIGHT;
 
-            this->V[0xF] = 0; // Flag de colisão [cite: 32]
+            this->V[0xF] = 0; // Flag de colisão 
 
             for(int row = 0; row < N; row++){
                 uint8_t spriteByte = this->RAM[this->I + row];
@@ -265,7 +265,7 @@ void VM::executarInstrução(){
                     }
                     break;
                 }
-                case 0x15: // FX15 - LD DT, Vx [cite: 104]
+                case 0x15: // FX15 - LD DT, Vx 
                     this->delay_timer = this->V[X];
                     break;
                 case 0x18: // FX18 - LD ST, Vx (Sound Timer) 
