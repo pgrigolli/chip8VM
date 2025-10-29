@@ -11,7 +11,6 @@ class Display {
         void clear();
         uint8_t getPixel(int x, int y) const;
         void setPixel(int x, int y, uint8_t v);
-        // Toggle pixel (xor). Retorna o valor anterior (0 ou 1).
         uint8_t togglePixel(int x, int y);
         void render(SDL_Renderer* renderer, int escala) const;
 };

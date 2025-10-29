@@ -13,10 +13,9 @@ class VM{
         uint8_t  SP;
         uint16_t I;
         uint16_t stack[16];
-        Display  DISPLAY;
+        Display  DISPLAY; // Tela do Chip-8
 
     public:
-        // Membros públicos para timers e teclado
         uint8_t delay_timer;
         uint8_t sound_timer;
         uint8_t keypad[16];
@@ -24,12 +23,11 @@ class VM{
         void setPC(uint16_t pcInicial);
         uint16_t getPC();
 
-        // --- ASSINATURAS CORRIGIDAS (Estilo C++) ---
         void inicializar(uint16_t pcInicial);
-        void executarInstrução(); // Removido (VM* vm)
-        void carregarROM(char* arqRom, uint16_t pc_inicial); // Removido (VM* vm)
-        void imprimirRegistradores(); // Removido (VM* vm)
-        
+        void executarInstrução(); 
+        void carregarROM(char* arqRom, uint16_t pc_inicial);
+        void imprimirRegistradores();
+
         bool pressionado(uint8_t key);
         void renderizarTela(SDL_Renderer* renderer, int escala);
 };

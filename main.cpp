@@ -1,37 +1,40 @@
 #include <stdio.h>
+#include <fstream> 
 #include "c8vm.hpp"
 #include "defs.hpp"
 #include <SDL2/SDL.h> 
 
 const int ESCALA = 10; 
-const int FPS = 60; // Tela e timers rodam a 60Hz [cite: 139, 140]
+const int FPS = 60; 
 const int FRAME_DELAY = 1000 / FPS; 
-const int CLOCK_HZ = 500; // Velocidade padrão da CPU [cite: 133]
+const int CLOCK_HZ = 500; 
 const int CICLOS_POR_FRAME = CLOCK_HZ / FPS; 
 
 
 int main(int argc, char** argv){
     
-    // --- Verificação de Argumentos ---
     if (argc < 2) {
         printf("Uso: %s <caminho_para_rom>\n", argv[0]);
         return 1;
     }
 
-    // --- Inicialização da VM ---
     VM vm = VM();
-    vm.inicializar(0x200); // PC Padrão 
+    vm.inicializar(0x200);
     
-    // --- CORREÇÃO DE ESTILO: Chamada unificada para C++ ---
-    vm.carregarROM(argv[1], 0x200); // Removido o "&vm"
+    vm.carregarROM(argv[1], 0x200);
 
-    // --- Inicialização do SDL ---
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         printf("Erro ao inicializar SDL: %s\n", SDL_GetError());
         return 1;
     }
 
-    // Cria a janela
+    std::ifstream romFile(argv[1], std::ios::binary);
+    if (!romFile) {
+        fprintf(stderr, "Erro: Não foi possível abrir a ROM '%s'\n", argv[1]);
+        return 1;
+    }
+    romFile.close();
+
     SDL_Window* window = SDL_CreateWindow(
         "Chip-8 Emulator",
         SDL_WINDOWPOS_UNDEFINED,
@@ -40,25 +43,27 @@ int main(int argc, char** argv){
         VIDEO_HEIGHT * ESCALA, // 32 * 10
         SDL_WINDOW_SHOWN
     );
-    if (window == NULL) { /*... (tratamento de erro) ...*/ return 1; }
+    if (window == NULL) {
+        printf("Erro ao criar janela %s\n", SDL_GetError());
+        return 1; 
+    }
 
-    // Cria o renderizador
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (renderer == NULL) { /*... (tratamento de erro) ...*/ return 1; }
+    if (renderer == NULL) {
+        printf("Erro ao criar renderizador %s\n", SDL_GetError());
+        return 1;
+    }
 
-    // --- Loop Principal da Emulação ---
     bool running = true;
     SDL_Event event;
 
-    while (running) {
+    while (running) { // Laço principal
         
-        // 1. Processar Eventos (Input) [cite: 141]
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
             }
             
-            // Mapeamento de Teclado (QWERTY para Hex) [cite: 100]
             if (event.type == SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
                     case SDLK_1: vm.keypad[0x1] = 1; break;
@@ -104,30 +109,19 @@ int main(int argc, char** argv){
             }
         }
 
-        // 2. Executar Ciclos da CPU (a 500Hz) [cite: 133, 134]
         for (int i = 0; i < CICLOS_POR_FRAME; ++i) {
-            // --- CORREÇÃO DE ESTILO: Chamada unificada para C++ ---
-            vm.executarInstrução(); // Removido o "&vm"
+            vm.executarInstrução();
         }
 
-        // 3. Renderizar a Tela (a 60Hz) [cite: 139]
         vm.renderizarTela(renderer, ESCALA);
 
-        // 4. Atualizar Timers (a 60Hz) [cite: 103, 140]
         if (vm.delay_timer > 0) {
             vm.delay_timer--;
         }
 
-        if (vm.sound_timer > 0) {
-            vm.sound_timer--;
-            // TODO: Adicionar lógica de "BEEP" aqui [cite: 105, 142]
-        }
-
-        // 5. Delay
         SDL_Delay(FRAME_DELAY);
     }
 
-    // --- Finalização ---
     printf("Encerrando emulador.\n");
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
