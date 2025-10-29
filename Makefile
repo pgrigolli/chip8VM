@@ -13,7 +13,7 @@ FREQUENCIA ?= 500 # 'FREQUENCIA' é o argumento --clock
 
 
 chip8: c8vm.o main.o display.o
-	$(CC) $(CFLAGS) -o $@ c8vm.o main.o display.o $(LDFLAGS) 
+	$(CC) $(CFLAGS) -o $@ c8vm.o main.o display.o $(LDFLAGS)
 
 c8vm.o: c8vm.cpp c8vm.hpp defs.hpp display.hpp
 	$(CC) $(CFLAGS) -c c8vm.cpp -o c8vm.o

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cstdlib>
-#include <cstring> // Para memcpy
+#include <cstring> 
 
 #include "c8vm.hpp"
 #include "defs.hpp"
@@ -27,7 +27,6 @@ uint8_t FONT_SPRITES[80] = {
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-
 void VM::setPC(uint16_t pc){
     this->PC = pc;
 }
@@ -46,16 +45,13 @@ void VM::inicializar(uint16_t pcInicial){
     this->DISPLAY.clear();
     for(int i=0;i<16;i++) this->stack[i] = 0;
 
-    // --- CORREÇÃO DE INICIALIZAÇÃO ---
-    for(int i=0; i<16; i++) this->keypad[i] = 0; // Zera o teclado
-    this->delay_timer = 0;                      // Zera o timer
-    this->sound_timer = 0;                      // Zera o timer
+    for(int i=0; i<16; i++) this->keypad[i] = 0; 
+    this->delay_timer = 0;                      
+    this->sound_timer = 0;                      
 
-    // Carrega os sprites da fonte na RAM 
     memcpy(&this->RAM[0x000], FONT_SPRITES, 80); 
 }
 
-// --- Assinatura corrigida (sem VM* vm) ---
 void VM::carregarROM(char* arqRom, uint16_t pcInicial){
 
   FILE* rom = fopen(arqRom, "rb");
@@ -83,11 +79,10 @@ void VM::carregarROM(char* arqRom, uint16_t pcInicial){
 void VM::executarInstrução(){
     uint16_t instrucao = (this->RAM[this->PC] << 8 | this->RAM[this->PC + 1]);
                                                                        
-    // Descomente para debug, se necessário
     // printf("RAM: %02X, RAM + 1 %02X, PC: %04X \n", this->RAM[this->PC], this->RAM[this->PC + 1], this->PC);
     // printf("Instrucao: 0x%04X\n", instrucao);
     
-    this->PC += 2; // Avança o PC antes de executar
+    this->PC += 2;
 
     uint8_t grupo = instrucao >> 12;
     uint8_t X     = (instrucao & 0x0F00) >> 8;
@@ -96,7 +91,6 @@ void VM::executarInstrução(){
     uint8_t NN    = instrucao & 0x00FF;
     uint16_t NNN   = instrucao & 0x0FFF;
 
-    // --- CORREÇÃO DE ESTILO: Trocado 'vm->' por 'this->' em TODOS os cases ---
     switch(grupo){
 
         case 0: 
@@ -144,7 +138,6 @@ void VM::executarInstrução(){
             this->V[X] += NN;
             break;
         
-        // --- CORREÇÃO DE OPCODE: 'case 8' implementado por completo ---
         case 8:
             switch (N) {
                 case 0x0: // 8XY0 - LD Vx, Vy
@@ -225,7 +218,6 @@ void VM::executarInstrução(){
             break;
         }
 
-        // --- CORREÇÃO DE OPCODE: 'case E' implementado por completo ---
         case 0xE:
             switch (NN) {
                 case 0x9E: // EX9E - Pula se a tecla em Vx está pressionada
@@ -244,7 +236,6 @@ void VM::executarInstrução(){
             }
             break;
 
-        // --- CORREÇÃO DE OPCODE: 'case F' implementado por completo ---
         case 0xF:
             switch (NN) {
                 case 0x07: // FX07 - LD Vx, DT (Delay Timer) 
@@ -274,13 +265,13 @@ void VM::executarInstrução(){
                 case 0x1E: // FX1E - ADD I, Vx
                     this->I += this->V[X];
                     break;
-                case 0x29: // FX29 - LD F, Vx (Aponta I para o sprite do dígito em Vx) 
-                    this->I = (this->V[X] * 5); // Sprites começam em 0x000 e têm 5 bytes 
+                case 0x29: // FX29 - LD F, Vx
+                    this->I = (this->V[X] * 5);
                     break;
                 case 0x33: // FX33 - LD B, Vx (BCD)
-                    this->RAM[this->I]     = (this->V[X] / 100) % 10; // Centenas
-                    this->RAM[this->I + 1] = (this->V[X] / 10) % 10;  // Dezenas
-                    this->RAM[this->I + 2] = (this->V[X] / 1) % 10;   // Unidades
+                    this->RAM[this->I]     = (this->V[X] / 100) % 10; 
+                    this->RAM[this->I + 1] = (this->V[X] / 10) % 10;  
+                    this->RAM[this->I + 2] = (this->V[X] / 1) % 10;   
                     break;
                 case 0x55: // FX55 - LD [I], Vx (Salva V0 a VX)
                     for (int i = 0; i <= X; i++) {

@@ -30,7 +30,6 @@ void imprimirAjuda(char* nomePrograma) {
 
 int main(int argc, char** argv){
     
-    // --- Verificação de Argumentos ---
     if (argc < 2) {
         imprimirAjuda(argv[0]);
         return 1;
@@ -121,17 +120,22 @@ int main(int argc, char** argv){
         VIDEO_HEIGHT * ESCALA, // Usa a variável
         SDL_WINDOW_SHOWN
     );
-    if (window == NULL) { /*... (tratamento de erro) ...*/ return 1; }
+    if (window == NULL) {
+        printf("Erro ao criar janela %s\n", SDL_GetError());
+        return 1; 
+    }
 
-    // Cria o renderizador
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (renderer == NULL) { /*... (tratamento de erro) ...*/ return 1; }
+    if (renderer == NULL) {
+        printf("Erro ao criar renderizador %s\n", SDL_GetError());
+        return 1;
+    }
 
     // --- Loop Principal da Emulação (sem alterações) ---
     bool running = true;
     SDL_Event event;
 
-    while (running) {
+    while (running) { // Laço principal
         
         // 1. Processar Eventos (Input) 
         while (SDL_PollEvent(&event)) {
@@ -207,7 +211,6 @@ int main(int argc, char** argv){
         SDL_Delay(FRAME_DELAY);
     }
 
-    // --- Finalização ---
     printf("Encerrando emulador.\n");
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
