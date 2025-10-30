@@ -3,6 +3,11 @@
 Este projeto implementa uma máquina virtual do Chip-8, um interpretador usado originalmente em microcomputadores da década de 1970 para rodar jogos simples.
 O objetivo deste trabalho é recriar a execução do sistema, interpretando instruções do Chip-8 e exibindo a saída gráfica em uma janela.
 
+### Trabalho da matéria de Aspectos de Linguagem de Programação - BCC6002
+Alunos:
+* Pedro Chouery Grigolli - a2551845
+* Guilherme Saides Serbai - a2551802
+
 # Execução
 
 ## Compilar usando Makefile
