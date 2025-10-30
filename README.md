@@ -5,16 +5,25 @@ O objetivo deste trabalho é recriar a execução do sistema, interpretando inst
 
 # Execução
 
-### Compilar usando Makefile
+## Compilar usando Makefile
+### Pré-Requisitos
+* C++
+* g++
+* SDL2
 ``` bash
 make all
 ```
 
-### Executar o código
+## Executar o código
 Existem dois parâmetros não obrigatórios:
 * --scale escala - Escala de exibição da tela - Padrão 10x
 *  --clock frequencia - Frequência de execução (Instruções por segundo) - Padrão 500Hz
 
 ``` bash
 ./chip8 --scale <escala> --clock <frequencia> caminho/para/ROM
+```
+Exemplo
+
+``` bash
+./chip8 --scale 10 --clock 500 ./roms/PONG
 ```
